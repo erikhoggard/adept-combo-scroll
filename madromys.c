@@ -4,7 +4,7 @@
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 2 of the License, or
+ * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
@@ -40,11 +40,14 @@
 #ifndef PLOOPY_DRAGSCROLL_SEMAPHORE
 #    define PLOOPY_DRAGSCROLL_SEMAPHORE 4
 #endif
-// #ifndef PLOOPY_DRAGSCROLL_MOMENTARY
-// #    define PLOOPY_DRAGSCROLL_MOMENTARY 1
-// #endif
+#ifndef PLOOPY_DRAGSCROLL_MOMENTARY
+#    define PLOOPY_DRAGSCROLL_MOMENTARY 1
+#endif
 #ifndef PLOOPY_DRAGSCROLL_INVERT
 #    define PLOOPY_DRAGSCROLL_INVERT 1
+#endif
+#ifndef PLOOPY_COMBO_SCROLL 
+#    define PLOOPY_COMBO_SCROLL 1
 #endif
 
 keyboard_config_t keyboard_config;
@@ -108,7 +111,9 @@ report_mouse_t pointing_device_task_kb(report_mouse_t mouse_report) {
 }
 
 bool process_record_kb(uint16_t keycode, keyrecord_t* record) {
+    #ifdef PLOOPY_COMBO_SCROLL
     static uint16_t timer;
+    #endif
 
     if (!process_record_user(keycode, record)) {
         return false;
@@ -121,22 +126,32 @@ bool process_record_kb(uint16_t keycode, keyrecord_t* record) {
     }
 
     if (keycode == DRAG_SCROLL) {
-        if (record->event.pressed)
-        {
-            timer = timer_read();
-            is_drag_scroll ^= 1;
-        } else {
-            if (timer_elapsed(timer) > 200) {
-                is_drag_scroll = 0;
+        #ifdef PLOOPY_COMBO_SCROLL
+            if (record->event.pressed)
+            {
+                timer = timer_read();
+                is_drag_scroll ^= 1;
+            } else {
+                if (timer_elapsed(timer) > 200) {
+                    is_drag_scroll = 0;
+                }
             }
-        }
+        #else
+        // original behavior
+            #ifndef PLOOPY_DRAGSCROLL_MOMENTARY
+            if (record->event.pressed)
+            #endif
+            {
+                is_drag_scroll ^= 1;
+            }
+        #endif
 
 #ifdef PLOOPY_DRAGSCROLL_FIXED
         pointing_device_set_cpi(is_drag_scroll ? PLOOPY_DRAGSCROLL_DPI : dpi_array[keyboard_config.dpi_config]);
 #else
         pointing_device_set_cpi(is_drag_scroll ? (dpi_array[keyboard_config.dpi_config] * PLOOPY_DRAGSCROLL_MULTIPLIER) : dpi_array[keyboard_config.dpi_config]);
 #endif
-    }
+    }  
 
     return true;
 }
@@ -180,3 +195,4 @@ void matrix_init_kb(void) {
     }
     matrix_init_user();
 }
+
