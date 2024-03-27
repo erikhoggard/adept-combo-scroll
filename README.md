@@ -6,10 +6,12 @@ Hold to scroll as usual, or tap to toggle scrolling on/off
 
 # Configuration
 
-madromys.c contains a new PLOOPY_COMBO_SCROLL macro def.
+## PLOOPY_COMBO_SCROLL
 If defined, default scroll behavior will be overridden with combo tap/toggle.
 
 
+## PLOOPY_AUTO_BREAK_SCROLL
+If defined, any button press will cause scroll mode to be toggled off.
 
 
 

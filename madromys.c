@@ -49,6 +49,9 @@
 #ifndef PLOOPY_COMBO_SCROLL 
 #    define PLOOPY_COMBO_SCROLL 1
 #endif
+#ifndef PLOOPY_AUTO_BREAK_SCROLL 
+#    define PLOOPY_AUTO_BREAK_SCROLL 1
+#endif
 
 keyboard_config_t keyboard_config;
 uint16_t          dpi_array[] = PLOOPY_DPI_OPTIONS;
@@ -110,6 +113,14 @@ report_mouse_t pointing_device_task_kb(report_mouse_t mouse_report) {
     return pointing_device_task_user(mouse_report);
 }
 
+static void handle_scroll_toggle(void) {
+    #ifdef PLOOPY_DRAGSCROLL_FIXED
+            pointing_device_set_cpi(is_drag_scroll ? PLOOPY_DRAGSCROLL_DPI : dpi_array[keyboard_config.dpi_config]);
+    #else
+            pointing_device_set_cpi(is_drag_scroll ? (dpi_array[keyboard_config.dpi_config] * PLOOPY_DRAGSCROLL_MULTIPLIER) : dpi_array[keyboard_config.dpi_config]);
+    #endif
+}
+
 bool process_record_kb(uint16_t keycode, keyrecord_t* record) {
     #ifdef PLOOPY_COMBO_SCROLL
     static uint16_t timer;
@@ -146,12 +157,15 @@ bool process_record_kb(uint16_t keycode, keyrecord_t* record) {
             }
         #endif
 
-#ifdef PLOOPY_DRAGSCROLL_FIXED
-        pointing_device_set_cpi(is_drag_scroll ? PLOOPY_DRAGSCROLL_DPI : dpi_array[keyboard_config.dpi_config]);
-#else
-        pointing_device_set_cpi(is_drag_scroll ? (dpi_array[keyboard_config.dpi_config] * PLOOPY_DRAGSCROLL_MULTIPLIER) : dpi_array[keyboard_config.dpi_config]);
-#endif
-    }  
+        handle_scroll_toggle();
+
+    } else {
+        #ifdef PLOOPY_AUTO_BREAK_SCROLL
+        // any other keypress will disable drag scroll
+        is_drag_scroll = 0;
+        handle_scroll_toggle();
+        #endif
+    } 
 
     return true;
 }
